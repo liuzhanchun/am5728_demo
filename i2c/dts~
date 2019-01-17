@@ -1,0 +1,57 @@
+
+i2c4: i2c@4807a000 {
+	compatible = "ti,omap4-i2c";
+	reg = <0x4807a000 0x100>;
+	interrupts = <GIC_SPI 57 IRQ_TYPE_LEVEL_HIGH>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	ti,hwmods = "i2c4";
+	status = "disabled";
+};
+
+&dra7_pmx_core {
+	pinctrl-names = "default";
+	pinctrl-0 = <&gpio1_pins_default &gpio4_pins_default &i2c1_pins_default &i2c4_pins_default &gpmc_pins_default>;
+
+	i2c4_pins_default: i2c4_pins_default {
+		pinctrl-single,pins = <
+			DRA7XX_CORE_IOPAD(0x3440, (PIN_INPUT_PULLUP | MUX_MODE7)) /* gpmc_a0.i2c4_scl */
+			DRA7XX_CORE_IOPAD(0x3444, (PIN_INPUT_PULLUP | MUX_MODE7)) /* gpmc_a1.i2c4_sda */
+		>;
+	};
+};
+
+&i2c4 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+
+	tmp102: tmp102@49 {
+		compatible = "ti,tmp102";
+		reg = <0x49>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <13 IRQ_TYPE_LEVEL_LOW>;
+		#thermal-sensor-cells = <1>;
+	};
+
+	mcp_rtc: rtc@6f {
+		compatible = "microchip,mcp7941x";
+		reg = <0x6f>;
+		interrupts-extended = <&crossbar_mpu GIC_SPI 2 IRQ_TYPE_EDGE_RISING>,
+				      <&dra7_pmx_core 0x424>;
+		interrupt-names = "irq", "wakeup";
+
+		vcc-supply = <&vdd_3v3>;
+		wakeup-source;
+	};
+};
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,68 @@
+
+mcspi3: spi@480b8000 {
+	compatible = "ti,omap4-mcspi";
+	reg = <0x480b8000 0x200>;
+	interrupts = <GIC_SPI 86 IRQ_TYPE_LEVEL_HIGH>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	ti,hwmods = "mcspi3";
+	ti,spi-num-cs = <2>;
+	dmas = <&sdma_xbar 15>, <&sdma_xbar 16>;
+	dma-names = "tx0", "rx0";
+	status = "disabled";
+};
+spi3_pins: spi3_pins {
+	pinctrl-single,pins = <
+		DRA7XX_CORE_IOPAD(0x36d4, (INPUT_EN | MUX_MODE3))          /* mcasp1_axr8.spi3_sclk (B12) */
+		DRA7XX_CORE_IOPAD(0x36d8, (INPUT_EN | MUX_MODE3))          /* mcasp1_axr9.spi3_d1 (A11) */
+		DRA7XX_CORE_IOPAD(0x36dc, (INPUT_EN | MUX_MODE3))          /* mcasp1_axr10.spi3_d0 (B13) */
+		DRA7XX_CORE_IOPAD(0x36e0, (PIN_OUTPUT_PULLUP | MUX_MODE3)) /* mcasp1_axr11.spi3_cs0 (A12) */
+	>;
+};
+&mcspi3 {
+        status = "okay";
+        pinctrl-names = "default";
+        pinctrl-0 = <&spi3_pins>;
+        ti,pindir-d0-out-d1-in;
+
+	spidev0:spi@0 {
+		compatible = "spidev";
+		reg = <0>;			/* CS0 */
+		spi-max-frequency = <1500000>;
+	};
+};
+
+
+
+&ecspi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1>;
+	fsl,spi-num-chipselects = <2>;
+	status = "okay";
+
+	cs-gpios = <
+		&gpio2 30 GPIO_ACTIVE_HIGH
+		&gpio3 19 GPIO_ACTIVE_HIGH
+	>;
+
+	spidev0: spi@0 {
+		compatible = "spidev";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+	};
+
+	spidev1: spi@1 {
+		compatible = "spidev";
+		reg = <1>;
+		spi-max-frequency = <54000000>;
+	};
+};
+
+
+
+内核中选中spidev
+
+Device Drivers --->
+	[*] SPI support --->
+		<*> User Mode SPI device driver support
+

@@ -1,0 +1,1 @@
+cmd_/home/develop/share/demo/i2c/driver/ex2/i2c-driver.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/develop/share/demo/i2c/driver/ex2/i2c-driver.ko /home/develop/share/demo/i2c/driver/ex2/i2c-driver.o /home/develop/share/demo/i2c/driver/ex2/i2c-driver.mod.o

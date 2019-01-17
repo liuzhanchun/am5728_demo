@@ -1,0 +1,8 @@
+	my_gpio_irq {
+		compatible = "my_gpio_irq";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		gpios = <&gpio3 22 GPIO_ACTIVE_LOW>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <22 IRQ_TYPE_LEVEL_LOW>;
+	};

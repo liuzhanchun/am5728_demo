@@ -1,0 +1,178 @@
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/cdev.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/fcntl.h>
+#include <linux/uaccess.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/poll.h>
+#include <asm/irq.h>
+#include <linux/wait.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include "gpio.h"
+
+#define DEVICE_NAME			"ti57xx_gpio"
+
+
+#define CTRL_MODULE_BASE                0x4a002000
+#define CTRL_SIZE                       8*1024   //8KiB
+
+//the key gpio
+
+#define conf_gpio3_19 			(0x1530)  //010
+#define conf_gpio3_20 			(0x1534)  //010
+
+#define WR_MEM_32(addr, data)    *(unsigned int*)OMAP2_L4_IO_ADDRESS(addr) =(unsigned int)(data)
+#define RD_MEM_32(addr)          *(unsigned int*)OMAP2_L4_IO_ADDRESS(addr) 
+
+dev_t			ti57xx_gpio_ndev; //device num
+static struct cdev	ti57xx_gpio_cdev; // char device
+static struct class	*ti57xx_gpio_class;
+
+static u32 gp0_vir;  //GP0 register vir base addr
+static u32 gp1_vir;  //GP1 register vir base addr
+static u32 gp2_vir;  //GP2 register vir base addr
+static u32 gp3_vir;  //GP3 register vir base addr
+static u32 gp4_vir;  //GP4 register vir base addr
+static u32 gp5_vir;  //GP5 register vir base addr
+static u32 gp6_vir;  //GP6 register vir base addr
+static u32 gp7_vir;  //GP7 register vir base addr
+static u32 gp8_vir;  //GP8 register vir base addr
+
+
+static void config_gpio_muxmode(void)
+{
+    u32 reg_vir;
+    u32 value=0;
+    reg_vir = (u32)ioremap_nocache(CTRL_MODULE_BASE, CTRL_SIZE);
+    if (!reg_vir) {
+			pr_err(DEVICE_NAME ": ctrl register remapping failed");			
+    }   
+
+    __raw_writel(0xE, reg_vir + conf_gpio3_19);
+    __raw_writel(0xE, reg_vir + conf_gpio3_20);
+
+    iounmap((void *)reg_vir);
+}
+static int ti57xx_gpio_register_access(void __user *arg)
+{
+	struct ti57xx_gpio_regs regs;
+	if (copy_from_user(&regs, arg, sizeof(regs)))
+		return -EFAULT;
+
+	if (regs.mode == SET_REGS)
+  {
+		if(regs.bank == BANK3)
+		{
+		     //pr_info(DRIVER_NAME ":bank id %x regs.offset %x regs.value %x\n",regs.bank,regs.offset,regs.value);
+		     __raw_writel(regs.value, gp3_vir + regs.offset);             
+		}
+  }
+	else
+	{ 
+    if(regs.bank == BANK3)
+		  regs.value = __raw_readl(gp3_vir + regs.offset);
+       
+		if(copy_to_user(arg, &regs, sizeof(regs)))
+			return -EFAULT;
+	}
+	return 0;
+}
+
+static long ti57xx_gpio_ioctl(struct file *file, unsigned int cmd,unsigned long arg)
+{
+	int ret = 0;
+  void __user *argp = (void __user *)arg;
+	switch (cmd) {       
+ 	case TI57XX_GPIO_ACCESS_REGS:
+				ti57xx_gpio_register_access(argp);
+	break;
+	default:
+		ret = -1;
+	}
+	return ret;
+}
+static const struct file_operations ti57xx_gpio_fops = {
+	.owner          = THIS_MODULE,	
+	.unlocked_ioctl = ti57xx_gpio_ioctl,
+};
+
+/*
+ * init part of module
+ */
+
+static int __init gpio_init(void)
+{
+	int ret = 0;
+     
+	ret = alloc_chrdev_region(&ti57xx_gpio_ndev, 0,1, DEVICE_NAME);
+	if (ret < 0) {
+		pr_err(DEVICE_NAME ": could'nt allocate the character driver\n");
+		return -1;
+	}
+	cdev_init(&ti57xx_gpio_cdev, &ti57xx_gpio_fops);
+	
+	ret = cdev_add(&ti57xx_gpio_cdev, ti57xx_gpio_ndev, 1);
+	if (ret < 0) {
+		pr_err(DEVICE_NAME ": cdev add failed\n");
+		unregister_chrdev_region(ti57xx_gpio_ndev, 1);
+		return -1;
+	}
+	
+	ti57xx_gpio_class = class_create(THIS_MODULE, DEVICE_NAME);
+	if (!ti57xx_gpio_class) {
+		pr_err(DEVICE_NAME ":failed to add device to sys fs\n");
+		goto ERROR_CLASS;
+	}
+	device_create(ti57xx_gpio_class, NULL, ti57xx_gpio_ndev,NULL, DEVICE_NAME);
+	
+ 	config_gpio_muxmode();
+ 	
+ 	gp3_vir = (u32)ioremap_nocache(GP3_BASE, GPIO_SIZE);
+ 	
+ 	if (!gp3_vir) {
+		pr_err(DEVICE_NAME ": register remapping failed");	
+		goto ERROR_REG;
+	}
+  pr_info(DEVICE_NAME ":*************************\n");     
+	return 0;
+
+ERROR_REG:
+	device_destroy(ti57xx_gpio_class, ti57xx_gpio_ndev);
+	class_destroy(ti57xx_gpio_class);
+ERROR_CLASS:
+	cdev_del(&ti57xx_gpio_cdev);
+	unregister_chrdev_region(ti57xx_gpio_ndev, 1);
+	return -1;
+}
+
+/*
+ * exit part of module
+ */
+
+void gpio_exit(void)
+{
+	device_destroy(ti57xx_gpio_class, ti57xx_gpio_ndev);
+	class_destroy(ti57xx_gpio_class);
+	cdev_del(&ti57xx_gpio_cdev);
+	unregister_chrdev_region(ti57xx_gpio_ndev, 1);
+  iounmap((void *)gp3_vir);   
+	pr_info(DEVICE_NAME ": Exiting TI81XX_GPIO module\n");
+}
+
+
+module_init(gpio_init);
+module_exit(gpio_exit);
+
+MODULE_AUTHOR("lzc");
+MODULE_LICENSE("GPL");
+
+

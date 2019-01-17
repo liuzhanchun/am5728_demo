@@ -1,0 +1,1 @@
+cmd_/home/develop/share/demo/gpioirq/driver/gpioirq.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/develop/share/demo/gpioirq/driver/gpioirq.ko /home/develop/share/demo/gpioirq/driver/gpioirq.o /home/develop/share/demo/gpioirq/driver/gpioirq.mod.o

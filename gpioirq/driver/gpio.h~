@@ -1,0 +1,11 @@
+#ifndef _GPIO_H_
+#define _GPIO_H_
+
+#define TI57XX_GPIO_ACCESS_REGS		_IOWR('G', 1, struct ti81xx_gpio_regs)
+
+#endif
+
+
+
+
+

@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <linux/input.h>  
+
+int main(int argc, char **argv)
+{
+    int key_fd = 0;
+    int status = 0;
+    struct input_event key_event
+   key_fd = open("/dev/input/event0", O_RDONLY);
+    if (key_fd < 0) {
+        printf("%d: open error\n", __LINE__);
+        return -1;
+    }
+printf("111111dhdn111111");
+ //   while (1) {
+printf("1111111zxbhftgdtjyn11111");
+    //    memset(&input_event, 0x00, sizeof(struct input_event));
+printf("1111111dtyhjnd11111");
+         status = read(key_fd, &event, sizeof(event));
+printf("111111szregmjnuytd111111");
+  /*      if (status < 0) {
+            printf("%d: read error\n", __LINE__);
+            return -1;
+        }
+
+       printf("input_event.type =%d,input_event.code = %d ,input_event.value = %d",input_event.type,input_event.code,input_event.value);
+        
+       sleep(1);
+    }
+
+    close (key_fd);*/
+
+    return status;
+}

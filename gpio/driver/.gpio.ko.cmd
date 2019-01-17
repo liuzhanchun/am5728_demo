@@ -1,0 +1,1 @@
+cmd_/home/develop/share/demo/gpio/driver/gpio.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/develop/share/demo/gpio/driver/gpio.ko /home/develop/share/demo/gpio/driver/gpio.o /home/develop/share/demo/gpio/driver/gpio.mod.o

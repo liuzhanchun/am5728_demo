@@ -1,0 +1,24 @@
+		uart8: serial@48422000 {
+			compatible = "ti,dra742-uart", "ti,omap4-uart";
+			reg = <0x48422000 0x100>;
+			interrupts = <GIC_SPI 219 IRQ_TYPE_LEVEL_HIGH>;
+			ti,hwmods = "uart8";
+			clock-frequency = <48000000>;
+			status = "disabled";
+		};
+
+uart8_pins_default: uart8_pins_default {
+	pinctrl-single,pins = <
+		DRA7XX_CORE_IOPAD(0x34f4, (PIN_INPUT_PULLUP | MUX_MODE5)) /* vin1a_d0.uart8_rxd */
+		DRA7XX_CORE_IOPAD(0x34f8, (PIN_INPUT_PULLUP | MUX_MODE5)) /* vin1a_d1.uart8_txd */
+	>;
+};
+
+
+&uart8 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart8_pins_default>;
+	interrupts-extended = <&crossbar_mpu GIC_SPI 219 IRQ_TYPE_LEVEL_HIGH>,
+			      <&dra7_pmx_core 0x0f4>;
+};
